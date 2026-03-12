@@ -24,16 +24,6 @@ open("quijote_clean.txt", "w", encoding="utf-8").writelines(clean)
 - Première ligne : `Capítulo primero. Que trata de la condición y ejercicio del famoso hidalgo`
 - Dernière ligne : `Fin`
 
-### 2. Vérification des artefacts
-
-Vérification automatique après extraction :
-
-| Critère | Résultat |
-|---|---|
-| Lignes contenant uniquement des espaces (≠ `\n`) | 0 |
-| Lignes commençant par 2 espaces ou plus (indentation parasite) | 0 |
-
-**Conclusion :** Aucun nettoyage supplémentaire nécessaire. Le fichier brut Gutenberg est propre une fois le header/footer supprimé.
 
 ## Ce qui a été supprimé
 
