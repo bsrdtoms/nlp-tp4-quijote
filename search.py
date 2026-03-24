@@ -9,6 +9,10 @@ from nltk.stem import SnowballStemmer
 load_dotenv()
 EMB_CACHE = Path(".cache/embeddings.joblib")
 MATRICE_EMB = joblib.load(EMB_CACHE) if EMB_CACHE.exists() else None
+
+API_TOKEN = os.getenv("API_TOKEN")
+EMB_URL = "https://llm.lab.sspcloud.fr/ollama/api/embed" if API_TOKEN else "http://localhost:11434/api/embed"
+EMB_HEADERS = {"Authorization": f"Bearer {API_TOKEN}", "Content-Type": "application/json"} if API_TOKEN else {"Content-Type": "application/json"}
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from textual.app import App, ComposeResult
@@ -59,13 +63,44 @@ def recherche_embeddings(requete, top_k=10):
     if MATRICE_EMB is None:
         return []
     resp = requests.post(
-        "https://llm.lab.sspcloud.fr/ollama/api/embed",
-        headers={"Authorization": f"Bearer {os.getenv('API_TOKEN')}", "Content-Type": "application/json"},
+        EMB_URL,
+        headers=EMB_HEADERS,
         json={"model": "bge-m3:latest", "input": [requete]},
         timeout=30,
     )
     vec = np.array(resp.json()["embeddings"][0], dtype=np.float32)
     scores = MATRICE_EMB @ vec / (np.linalg.norm(MATRICE_EMB, axis=1) * np.linalg.norm(vec) + 1e-10)
+    idx = np.argsort(scores)[::-1][:top_k]
+    return [(PARAGRAPHES[i], round(float(scores[i]), 3)) for i in idx if scores[i] > 0]
+
+
+CACHE_SPACY_EMB = Path(".cache/embeddings_spacy.joblib")
+MATRICE_SPACY_EMB = None
+
+def _init_spacy_emb():
+    global MATRICE_SPACY_EMB, _nlp_lg
+    if MATRICE_SPACY_EMB is not None:
+        return
+    if _nlp_lg is None:
+        import spacy
+        _nlp_lg = spacy.load("es_core_news_lg")
+    if CACHE_SPACY_EMB.exists():
+        MATRICE_SPACY_EMB = joblib.load(CACHE_SPACY_EMB)
+    else:
+        MATRICE_SPACY_EMB = np.array([_nlp_lg(p).vector for p in PARAGRAPHES], dtype=np.float32)
+        joblib.dump(MATRICE_SPACY_EMB, CACHE_SPACY_EMB)
+
+
+_nlp_lg = None
+
+def recherche_spacy_emb(requete, top_k=10):
+    global _nlp_lg
+    _init_spacy_emb()
+    if _nlp_lg is None:
+        import spacy
+        _nlp_lg = spacy.load("es_core_news_lg")
+    vec = _nlp_lg(requete).vector
+    scores = MATRICE_SPACY_EMB @ vec / (np.linalg.norm(MATRICE_SPACY_EMB, axis=1) * np.linalg.norm(vec) + 1e-10)
     idx = np.argsort(scores)[::-1][:top_k]
     return [(PARAGRAPHES[i], round(float(scores[i]), 3)) for i in idx if scores[i] > 0]
 
@@ -114,7 +149,8 @@ class QuijoteApp(App):
         ("TF-IDF", "tfidf"),
         ("TF-IDF + stemming", "tfidf_stem"),
         ("TF-IDF + lemmatisation (spaCy)", "tfidf_lemma"),
-        ("Embeddings", "embeddings"),
+        ("Embeddings (bge-m3)", "embeddings"),
+        ("Embeddings (spaCy)", "embeddings_spacy"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -150,7 +186,17 @@ class QuijoteApp(App):
                 "\n\n---\n\n".join(f"[{score}] {texte}" for texte, score in resultats)
             )
         elif methode == "embeddings":
+            if MATRICE_EMB is None:
+                self.query_one("#status", Static).update("Cache manquant.")
+                self.query_one("#results", Static).update("Lancez d'abord : python compute_embeddings.py")
+                return
             resultats = recherche_embeddings(event.value)
+            self.query_one("#status", Static).update(f"{len(resultats)} résultat(s)")
+            self.query_one("#results", Static).update(
+                "\n\n---\n\n".join(f"[{score}] {texte}" for texte, score in resultats)
+            )
+        elif methode == "embeddings_spacy":
+            resultats = recherche_spacy_emb(event.value)
             self.query_one("#status", Static).update(f"{len(resultats)} résultat(s)")
             self.query_one("#results", Static).update(
                 "\n\n---\n\n".join(f"[{score}] {texte}" for texte, score in resultats)
@@ -159,4 +205,5 @@ class QuijoteApp(App):
             self.query_one("#status", Static).update("Méthode pas encore implémentée.")
 
 
-QuijoteApp().run()
+if __name__ == "__main__":
+    QuijoteApp().run()
