@@ -2,7 +2,7 @@
 
 Moteur de recherche dans *Don Quijote de la Mancha* avec interface TUI Textual.
 
-**Groupe G09**
+**Groupe G09** — Thomas Bossard
 
 ## Installation
 
@@ -46,7 +46,15 @@ ollama pull llama3
 ollama serve
 ```
 
-Le cache d'embeddings est calculé automatiquement au premier lancement du mode sémantique (opération longue ~2h sur CPU).
+Le cache d'embeddings est calculé automatiquement au premier lancement du mode sémantique.
+
+| Opération | Durée estimée |
+|-----------|--------------|
+| Cache TF-IDF (premier lancement) | ~30s |
+| Cache embeddings bge-m3 (premier lancement) | ~2h sur CPU |
+| Requête TF-IDF | < 1s |
+| Requête sémantique | ~2s |
+| Requête RAG (génération llama3) | ~30s |
 
 ## Dépendances
 
