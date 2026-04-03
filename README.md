@@ -27,22 +27,25 @@ uv run fdi-pln-2609-p4
 
 ## Mise en place Ollama (pour les modes sémantique et RAG)
 
-### 1. Installer Ollama
+> **Note** : le mode sémantique (bge-m3) est conçu pour être utilisé avec l'API SSPCloud.
+> En local sur CPU, le calcul du cache prend ~2h — préférer SSPCloud si disponible.
+
+### Option 1 — SSPCloud (recommandé)
+
+Créer un fichier `.env` à la racine :
+
+```
+API_TOKEN=votre_token_sspcloud
+```
+
+Le code utilisera automatiquement `llm.lab.sspcloud.fr` pour les embeddings.
+
+### Option 2 — Ollama local
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
-```
-
-### 2. Télécharger les modèles
-
-```bash
 ollama pull bge-m3
 ollama pull llama3
-```
-
-### 3. Lancer Ollama
-
-```bash
 ollama serve
 ```
 
@@ -51,7 +54,8 @@ Le cache d'embeddings est calculé automatiquement au premier lancement du mode 
 | Opération | Durée estimée |
 |-----------|--------------|
 | Cache TF-IDF (premier lancement) | ~30s |
-| Cache embeddings bge-m3 (premier lancement) | ~2h sur CPU |
+| Cache embeddings bge-m3 via SSPCloud | ~5 min |
+| Cache embeddings bge-m3 en local (CPU) | ~2h |
 | Requête TF-IDF | < 1s |
 | Requête sémantique | ~2s |
 | Requête RAG (génération llama3) | ~30s |
