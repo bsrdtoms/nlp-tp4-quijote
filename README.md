@@ -1,38 +1,31 @@
-# NLP TP 4 – Recherche dans Don Quijote
+# FDI PLN 2609 – Práctica 4 : Buscador en Don Quijote
 
-Application de recherche dans *Don Quijote de la Mancha* avec plusieurs méthodes de recherche.
+Moteur de recherche dans *Don Quijote de la Mancha* avec interface TUI Textual.
 
-## Prérequis
-
-- Python 3.12
+**Groupe G09**
 
 ## Installation
 
 ```bash
-python3.12 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+uv sync
+uv run python -m spacy download es_core_news_sm
 ```
 
 ## Lancer l'application
 
 ```bash
-.venv/bin/python search.py
+uv run fdi-pln-2609-p4
 ```
 
 ## Modes de recherche
 
 | Mode | Description |
 |------|-------------|
-| Recherche exacte | Paragraphes contenant la requête telle quelle |
-| TF-IDF | Similarité cosinus sur les fréquences de mots |
-| TF-IDF + stemming | Idem avec racinisation (SnowballStemmer) |
-| TF-IDF + lemmatisation (spaCy) | Idem avec lemmatisation (es_core_news_sm) |
-| Embeddings (bge-m3) | Similarité sémantique via bge-m3 (Ollama), meilleure qualité |
-| Embeddings (spaCy) | Similarité sémantique via word vectors spaCy (es_core_news_lg), 100% local |
+| Búsqueda clásica | TF-IDF numpy + lemmatisation spaCy + stopwords espagnols |
+| Búsqueda semántica | Embeddings bge-m3 (Ollama local) + similarité cosinus |
+| RAG | Recherche TF-IDF + génération llama3 avec références |
 
-## Embeddings (bge-m3) – mise en place (une seule fois)
-
-Le mode Embeddings bge-m3 utilise le modèle `bge-m3` via **Ollama** (local, par défaut).
+## Mise en place Ollama (pour les modes sémantique et RAG)
 
 ### 1. Installer Ollama
 
@@ -40,40 +33,21 @@ Le mode Embeddings bge-m3 utilise le modèle `bge-m3` via **Ollama** (local, par
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-### 2. Télécharger le modèle bge-m3
+### 2. Télécharger les modèles
 
 ```bash
 ollama pull bge-m3
+ollama pull llama3
 ```
 
-### 3. Calculer et mettre en cache les embeddings
-
-```bash
-.venv/bin/python compute_embeddings.py
-```
-
-Cela génère `.cache/embeddings.joblib`. À ne refaire qu'une seule fois.
-
-### 4. Lancer Ollama avant d'utiliser l'app
+### 3. Lancer Ollama
 
 ```bash
 ollama serve
 ```
 
-Ollama doit tourner en arrière-plan pour que le mode Embeddings fonctionne.
+Le cache d'embeddings est calculé automatiquement au premier lancement du mode sémantique (opération longue ~2h sur CPU).
 
----
+## Dépendances
 
-### Utiliser l'API SSPCloud à la place (optionnel)
-
-Si tu as un token SSPCloud, crée un fichier `.env` :
-
-```
-API_TOKEN=ton_token
-```
-
-Le code utilisera automatiquement l'API SSPCloud au lieu d'Ollama local.
-
-## Embeddings (spaCy) – mise en place
-
-Ce mode utilise `es_core_news_lg` (déjà inclus dans `requirements.txt`). Le cache est calculé automatiquement au premier lancement du mode — pas d'étape supplémentaire.
+Voir `pyproject.toml`. Géré par `uv`.
