@@ -54,7 +54,7 @@ Le cache d'embeddings est calculé automatiquement au premier lancement du mode 
 | Opération | Durée estimée |
 |-----------|--------------|
 | Cache TF-IDF (premier lancement) | ~30s |
-| Cache embeddings bge-m3 via SSPCloud | ~5 min |
+| Cache embeddings bge-m3 via SSPCloud | ~10 min |
 | Cache embeddings bge-m3 en local (CPU) | ~2h |
 | Requête TF-IDF | < 1s |
 | Requête sémantique | ~2s |
