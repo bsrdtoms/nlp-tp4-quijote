@@ -16,6 +16,9 @@ dependencies = [
 [project.scripts]
 fdi-pln-2609-p4 = "fdi_pln_2609_p4.cli:main"
 
+[project.urls]
+Repository = "https://github.com/bsrdtoms/nlp-tp4-quijote"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
